@@ -1,0 +1,9 @@
+build/*
+versions/*
+*.pyc
+__pycache__/
+.env
+.venv/
+.vscode/
+video.yaml
+.DS_Store
