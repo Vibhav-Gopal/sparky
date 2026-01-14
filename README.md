@@ -1,8 +1,8 @@
 # Sparky
 
-An end-to-end **local** content pipeline that converts a single idea into a short-form video:
+An end-to-end **local** content pipeline that converts a single idea prompt into a short-form video:
 
-**script_prompt.txt → YAML Director's script → AI images → TTS voiceover → word-level karaoke subtitles → final video**
+**Idea prompt (script_prompt.txt) → YAML Director's script → AI images → TTS voiceover → word-level karaoke subtitles → final video**
 
 Designed for repeatable YouTube Shorts / Reels style generation with a modular architecture.
 
@@ -136,7 +136,7 @@ Refer to `samples/` directory for sample inputs and outputs
 
 ---
 ## What is left?
-Frankly this is nowhere near a fully finished commercial grade project, I picked this up as a side hobby project, here are a few improvements that I have in mind, you are free to suggest more if you have any.
+Frankly this is nowhere near a fully finished commercial grade project, I picked this up as a side project, here are a few improvements that I have in mind, you are free to suggest more if you have any.
 - Visual updates to font (location, size, style, color, etc)
 - Better Image generation models
 - Better LLM models
