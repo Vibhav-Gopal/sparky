@@ -34,6 +34,8 @@ Video YAML Generator converts user video ideas into strictly formatted YAML file
 
 global:
   aspect_ratio: '9:16'
+  title: '<short, catchy video title>'
+  description: '<brief video description, 1-2 sentences>'
 scenes:
   - id: 's1'
     duration: <float>
