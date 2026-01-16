@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 import yaml
+import time
 
 from script_gen import generate_script
 from feedback_llm import generate_patch, call_llm
@@ -520,4 +521,7 @@ def main():
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     main()
+    end_time = time.time()
+    print(f"[pipeline] Total time taken: {end_time - start_time:.2f} seconds")
