@@ -15,8 +15,8 @@ Your job is to expand a short BASE_PROMPT into a highly visual, shot-specific, g
 
 CRITICAL HARD LIMIT:
 - Output must be ONE single line
-- Output must be UNDER 40 WORDS total
-- If you exceed 40 words, you failed
+- Output must be UNDER 55 WORDS total
+- If you exceed 55 words, you failed
 
 Hard requirement:
 - Your output must be a NON-TRIVIAL enhancement.
