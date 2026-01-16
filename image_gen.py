@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 import torch
-from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler
+from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler, ZImagePipeline
 
 
 DEFAULT_MODEL = "stable-diffusion-v1-5/stable-diffusion-v1-5" # CAN TRY ANY OTHER MODEL FROM HUGGINGFACE
@@ -48,7 +48,12 @@ class ImageGenerator:
             # requires_safety_checker=False,
         )
 
-        self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+        # self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
+        self.pipe = ZImagePipeline.from_pretrained(
+            "Tongyi-MAI/Z-Image-Turbo",
+            torch_dtype=torch.bfloat16,
+            low_cpu_mem_usage=False,
+        )
 
         self.pipe = self.pipe.to(self.device)
 
@@ -68,8 +73,8 @@ class ImageGenerator:
         negative_prompt: str = "",
         width: int = 720,
         height: int = 1280,
-        steps: int = 25,
-        guidance: float = 7.0,
+        steps: int = 9,
+        guidance: float = 0.0,
         seed: Optional[int] = None,
     ) -> Path:
         out_path = Path(out_path)
@@ -97,10 +102,10 @@ if __name__ == "__main__":
     out_path = gen.generate(
         prompt="A futuristic underground research facility with large server racks, glowing indicator lights, cables neatly arranged, cool blue lighting, a clean high-tech atmosphere, realistic machines and hardware only, cinematic",
         out_path="build/images/test.png",
-        width=512,
-        height=896,
-        steps=25,
-        guidance=7.0,
+        width=720,
+        height=1280,
+        steps=9,
+        guidance=0.0,
         seed=69,
     )
     print(f"Image saved to: {out_path}")

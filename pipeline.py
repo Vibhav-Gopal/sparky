@@ -34,8 +34,8 @@ RANDOMIZE_SEED = False  # if True -> BASE_SEED + unix time
 # Image generation
 SD_WIDTH = 720
 SD_HEIGHT = 1280
-SD_STEPS = 25
-SD_GUIDANCE = 7.0
+SD_STEPS = 9
+SD_GUIDANCE = 0.0
 
 # Video
 OUT_W = 1080
@@ -486,7 +486,7 @@ def main():
     scene_ids = [s["id"] for s in spec["scenes"]]
     concat_audio_wavs(scene_ids)
 
-    save_yaml(spec, Path(ROOT/"test.yaml"))  # save updated durations
+    # save_yaml(spec, Path(ROOT/"test.yaml"))  # save updated durations
 
     # 6) MFA alignment JSON
     prepare_mfa_input(spec)
