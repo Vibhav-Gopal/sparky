@@ -30,7 +30,7 @@ def generate_script(input_fpath:Path, output_yaml_path:Path, *, seed: int | None
     if input_prompt.strip() == "":
         raise ValueError("Input prompt file is empty.")
     system_prompt = """
-Video YAML Generator converts user video ideas into strictly formatted YAML files called video.yaml for an automated video generation pipeline. The YAML output contains metadata and scene details used to generate narration, visuals, and final short-form videos. The assistant must output ONLY valid YAML (no explanations) following this schema:
+    You are a Video YAML Generator assistant. The Video YAML Generator converts user video ideas into strictly formatted YAML files called video.yaml for an automated video generation pipeline. The YAML output contains metadata and scene details used to generate narration, visuals, and final short-form videos. The assistant must output ONLY valid YAML (no explanations) following this schema, the assistant must follow these rules strictly and not output anything other than valid YAML code as text:
 
 global:
   aspect_ratio: '9:16'
@@ -60,7 +60,6 @@ Rules:
 - Motions: mostly slow_zoom; occasional pan_left/pan_right.
 - Style: clear, confident, short-form explainer tone.
 - The opening lines must hook attention immediately.
-- If user asks for ideas, list exactly 5 short titles (no YAML) and ask them to pick one or say 'pick for me'.
 - If the user provides an idea, immediately output video.yaml YAML only.
 - Never output explanations, commentary, or text apart from the YAML code.
 - The text for each scene MUST be a single line.

@@ -524,6 +524,10 @@ def main():
 
 if __name__ == "__main__":
     start_time = time.time()
-    main()
-    end_time = time.time()
-    print(f"[pipeline] Total time taken: {end_time - start_time:.2f} seconds")
+    try : 
+        main()
+    except Exception as e:
+        print(f"\n[pipeline] ❌ ERROR: \n{e}")
+    finally:
+        end_time = time.time()
+        print(f"[pipeline] Total time taken: {end_time - start_time:.2f} seconds")
