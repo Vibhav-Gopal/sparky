@@ -135,6 +135,8 @@ def build_transcript_from_spec(spec: Dict[str, Any]) -> str:
 
 def ensure_dirs() -> None:
     BUILD.mkdir(exist_ok=True)
+    shutil.rmtree(BUILD, ignore_errors=True)
+    BUILD.mkdir(exist_ok=True)
     VERSIONS.mkdir(exist_ok=True)
 
     IMAGES_DIR.mkdir(parents=True, exist_ok=True)
