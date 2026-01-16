@@ -8,7 +8,8 @@ import torch
 from diffusers import StableDiffusionPipeline, EulerAncestralDiscreteScheduler, ZImagePipeline
 
 
-DEFAULT_MODEL = "stable-diffusion-v1-5/stable-diffusion-v1-5" # CAN TRY ANY OTHER MODEL FROM HUGGINGFACE
+# DEFAULT_MODEL = "stable-diffusion-v1-5/stable-diffusion-v1-5" # CAN TRY ANY OTHER MODEL FROM HUGGINGFACE
+DEFAULT_MODEL = "Tongyi-MAI/Z-Image-Turbo"
 
 
 def pick_device() -> str:
@@ -21,8 +22,8 @@ def pick_device() -> str:
 
 class ImageGenerator:
     """
-    Keeps the Stable Diffusion pipeline loaded in memory
-    so you don't reload it for every scene (big speedup).
+    Keeps the pipeline loaded in memory
+    so you don't reload it for every scene.
     """
 
     def __init__(
@@ -41,16 +42,16 @@ class ImageGenerator:
         if dtype is None:
             dtype = torch.float32
 
-        self.pipe = StableDiffusionPipeline.from_pretrained(
-            model_id,
-            torch_dtype=dtype,
-            # safety_checker=None,  # optional; faster # lets keep safety on, or else we dont know what god awful pics it might generate
-            # requires_safety_checker=False,
-        )
+        # self.pipe = StableDiffusionPipeline.from_pretrained(
+        #     model_id,
+        #     torch_dtype=dtype,
+        #     # safety_checker=None,  # optional; faster # lets keep safety on, or else we dont know what god awful pics it might generate
+        #     # requires_safety_checker=False,
+        # )
 
         # self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
         self.pipe = ZImagePipeline.from_pretrained(
-            "Tongyi-MAI/Z-Image-Turbo",
+            model_id,
             torch_dtype=torch.bfloat16,
             low_cpu_mem_usage=False,
         )

@@ -20,6 +20,7 @@ from prompt_enhance import enhance
 from schemas import merge_video_spec_with_patch
 from image_gen import ImageGenerator
 from audio_gen import CoquiVoiceover, wav_duration_seconds
+from bgm_gen import generate_bgm
 from subtitles_gen import generate_subtitles_from_mfa_json
 from compositor import compose_final_video
 
@@ -30,11 +31,11 @@ from compositor import compose_final_video
 # =============================================================================
 
 BASE_SEED = 1337
-RANDOMIZE_SEED = False  # if True -> BASE_SEED + unix time
+RANDOMIZE_SEED = True  # if True -> BASE_SEED + unix time
 
 # Image generation
-SD_WIDTH = 720
-SD_HEIGHT = 1280
+SD_WIDTH = 144
+SD_HEIGHT = 256
 SD_STEPS = 9
 SD_GUIDANCE = 0.0
 
@@ -57,9 +58,11 @@ SUB_SHADOW = 0
 # =============================================================================
 # PATHS AND FLAGS
 # =============================================================================
+CLEAN_BUILD = False  # If true, deletes build/ at start of run
 REGEN_ROOT_YAML = False
 SCRIPT_YAML_ONLY = False
 INTERACTIVE_MODE = False # For starting interactive chat with LLM to get ideas, doesn't run full pipeline
+BGM_ENABLED = False # Setting true will generate and add BGM to final video, runs on CPU takes a lot of time
 
 ROOT = Path(".")
 BUILD = ROOT / "build"
@@ -77,8 +80,10 @@ IMAGES_DIR = BUILD / "images"
 SUB_DIR = BUILD / "subtitles"
 MFA_IN = BUILD / "mfa_input"
 MFA_OUT = BUILD / "mfa_output"
-AUDIO_SCENES_DIR = BUILD / "audio" / "scenes"
+AUDIO_DIR = BUILD / "audio"
+AUDIO_SCENES_DIR = AUDIO_DIR / "scenes"
 
+BGM_OUTPUT = BUILD / "audio" / "bgm.wav"
 AUDIO_WAV = BUILD / "audio" / "audio.wav"
 SUB_ASS = BUILD / "subtitles" / "subtitles.ass"
 FINAL_MP4 = BUILD / "final.mp4"
@@ -135,7 +140,9 @@ def build_transcript_from_spec(spec: Dict[str, Any]) -> str:
 
 def ensure_dirs() -> None:
     BUILD.mkdir(exist_ok=True)
-    shutil.rmtree(BUILD, ignore_errors=True)
+    if not CLEAN_BUILD: print("[pipeline] WARNING: CLEAN_BUILD is False, existing build/ directory will be reused.")
+    if CLEAN_BUILD: input("[pipeline] WARNING: This will delete and recreate the build/ directory. Press Enter to continue or Ctrl+C to abort...")
+    if CLEAN_BUILD: shutil.rmtree(BUILD, ignore_errors=True)
     BUILD.mkdir(exist_ok=True)
     VERSIONS.mkdir(exist_ok=True)
 
@@ -272,6 +279,7 @@ def run_images(spec: Dict[str, Any], seed: int, debug: bool = False) -> None:
         scene_seed = seed + idx
         enhanced_prompt = enhance(prompt, seed=scene_seed, style="artstation", debug=debug)
         if debug : print(f"[pipeline] scene {sid}: seed={scene_seed}, prompt='{prompt}, revised_prompt='{enhanced_prompt}'")
+        print(f"[pipeline] generating image for scene {sid}...")
         gen.generate(
             prompt=enhanced_prompt,
             out_path=out_path,
@@ -334,10 +342,11 @@ def run_tts_per_scene(spec):
     return durations
 
 def concat_audio_wavs(scene_ids):
-    list_file = Path("audio_list.txt")
+    list_file = AUDIO_SCENES_DIR / "audio_list.txt"
+    # list_file = Path("audio_list.txt")
     lines = []
     for sid in scene_ids:
-        lines.append(f"file '{(AUDIO_SCENES_DIR / f'{sid}.wav').as_posix()}'")
+        lines.append(f"file '{Path(f'{sid}.wav').as_posix()}'")
 
     list_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -348,6 +357,20 @@ def concat_audio_wavs(scene_ids):
         "-c","copy",
         str(AUDIO_WAV)
     ], check=True)
+
+def run_bgm(spec: Dict[str, Any], bgm_output: Path = BGM_OUTPUT, seed: int|None = None, temperature: float|None = None) -> None:
+    print("[pipeline] generating background music...")
+    # read BUILD_VIDEO_YAML as text and send to llm using call_llm to get a prompt for bgm
+    video_yaml_text = BUILD_VIDEO_YAML.read_text(encoding="utf-8")
+    system_prompt = "You are a helpful assistant that generates background music prompts for an automated video generation pipeline. Based on the video script YAML provided, generate a concise and descriptive prompt for background music that fits the mood and theme of the video. The prompt should be suitable for input to a music generation model. Keep the prompt under 30 words. Output the prompt and prompt only, no other text"
+    user_prompt = f"Here is the video script YAML:\n{video_yaml_text}\n\nGenerate a background music prompt:"
+    bgm_prompt = call_llm(system_prompt, user_prompt, seed=seed, temperature=temperature)
+
+    # bgm_output = BUILD / "audio" / "bgm.wav"
+    generate_bgm(prompt=bgm_prompt, output_file=str(bgm_output), duration=wav_duration_seconds(str(AUDIO_WAV)))
+
+    print("[pipeline] background music saved:", bgm_output)
+
 # =============================================================================
 # Stage 3: MFA prep + align
 # =============================================================================
@@ -443,6 +466,7 @@ def run_compositor(spec: Dict[str, Any]) -> None:
         height=OUT_H,
         fps=FPS,
         crossfade_dur=CROSSFADE_DUR,
+        bgm_enabled=BGM_ENABLED,
     )
 
     if OVERRIDE_SUBTITLE_STYLE:
@@ -453,6 +477,8 @@ def run_compositor(spec: Dict[str, Any]) -> None:
             outline=SUB_OUTLINE,
             shadow=SUB_SHADOW,
         )
+    if BGM_ENABLED:
+        kwargs["bgm_output"] = BGM_OUTPUT
 
     compose_final_video(**kwargs)
 
@@ -467,6 +493,7 @@ def main():
     # Temporary workaround for OpenMP lib duplication issues (macOS conda)
     os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
     seed = now_seed(BASE_SEED, RANDOMIZE_SEED)
+
     ensure_dirs()
 
     if INTERACTIVE_MODE: start_interactive_chat()
@@ -485,7 +512,7 @@ def main():
     copy_latest_version_to_build(latest_version)
 
     # 2) Generate patch from feedback (optional)
-    run_feedback_llm_if_present(seed=BASE_SEED, temperature=1.0)
+    run_feedback_llm_if_present(seed=seed, temperature=1.0)
 
     # 3) Merge patch into build/video.yaml (final spec lives in build/video.yaml)
     spec = merge_patch_into_build_video()
@@ -495,7 +522,7 @@ def main():
     print(f"[pipeline] seed = {seed} (BASE_SEED={BASE_SEED}, RANDOMIZE_SEED={RANDOMIZE_SEED})")
 
     # 4) Generate images
-    run_images(spec, seed=seed,debug=True)
+    run_images(spec, seed=seed)
 
     # # 5) Generate audio
     durations = run_tts_per_scene(spec)
@@ -503,6 +530,10 @@ def main():
     # overwrite YAML durations
     for s in spec["scenes"]:
         s["duration"] = round(durations[s["id"]] + 0.45, 2)  # compensating for crossfade
+    
+    #Overwrite durations in build/video.yaml
+    save_yaml(spec, BUILD_VIDEO_YAML)
+
     scene_ids = [s["id"] for s in spec["scenes"]]
     concat_audio_wavs(scene_ids)
 
@@ -514,6 +545,8 @@ def main():
 
     # 7) Karaoke subtitles
     run_subtitles(mfa_json)
+
+    if BGM_ENABLED: run_bgm(spec, bgm_output=BGM_OUTPUT, seed=seed, temperature=1.0)
 
     # 8) Compose final video
     run_compositor(spec)

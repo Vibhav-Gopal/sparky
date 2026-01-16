@@ -255,6 +255,8 @@ def compose_final_video(
     margin_v: int | None = None,
     outline: int | None = None,
     shadow: int | None = None,
+    bgm_enabled: bool = False,
+    bgm_output: Path | None = None
 ) -> Path:
     scenes = spec.get("scenes", [])
     if not scenes:
@@ -345,7 +347,7 @@ def compose_final_video(
             out_ass=subtitles_for_burn,
             fontname=fontname or "Arial",
             fontsize=fontsize or 64,
-            margin_v=margin_v or 220,
+            margin_v=margin_v or 300,
             outline=outline or 3,
             shadow=shadow or 0,
             bold=1,
@@ -353,6 +355,7 @@ def compose_final_video(
 
     vf_subs = f"ass={subtitles_for_burn}"
 
+    if bgm_enabled: bgm_before_fin = work_dir / "before_bgm.mp4"
     cmd_subs = [
         "ffmpeg", "-y",
         "-i", str(av_mp4),
@@ -360,10 +363,16 @@ def compose_final_video(
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",
         "-c:a", "copy",
-        str(out_path),
+        str(out_path) if not bgm_enabled else str(bgm_before_fin),
     ]
     _run(cmd_subs)
 
-
+    if bgm_enabled:
+        if not bgm_output:
+            raise ValueError("BGM output path must be specified when BGM is enabled.")
+        cmd_add_bgm = [
+            "ffmpeg", "-i", str(bgm_before_fin), "-i", str(bgm_output), "-filter_complex", "[0:a]volume=1[fg]; [1:a]volume=0.2[bg]; [fg][bg]amix=inputs=2:duration=longest","-c:v", "copy", str(out_path)
+        ]
+        _run(cmd_add_bgm)
 
     return out_path

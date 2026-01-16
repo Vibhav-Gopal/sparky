@@ -96,7 +96,8 @@ Refer to `samples/` directory for sample inputs and outputs
 - Creates per-scene motion clips → `build/clips/sX.mp4`
 - Crossfades into slideshow → `build/slideshow.mp4`
 - Adds audio → `build/slideshow_with_audio.mp4`
-- Burns subtitles → `build/final.mp4`
+- If BGM enabled → `build/before_bgm.mp4`
+- Final output → `build/final.mp4`
 
 ---
 
@@ -117,12 +118,20 @@ Refer to `samples/` directory for sample inputs and outputs
 ---
 
 ## Setup
+There are two environemts to be setup, one for the BGM generation and one for the rest of the pipeline, if `BGM_ENABLED` is set to `False`, the second environment need not be setup.
+
 - Be on Python 3.11
 - Create a `conda` environment following `environment.yml`
 - Install `pip` dependencies given in `requirements.txt`
 - Install `ollama` and download model(s)
 - Install `ffmpeg`
 - Activate `conda` env
+
+The above setup is necessary, below is an optional setup to enable BGM generation.
+
+- Create a `conda` environment with `python3.9` named `audiocraftenv`, the environment name should not be changed (`conda create -n audiocraftenv python=3.9 -y`)
+- Clone and install [Audiocraft](https://github.com/facebookresearch/audiocraft.git) module. (Create an issue if you come across any hiccups with installation and I'll release a forked version with a few fixes)
+
 
 ---
 
@@ -153,4 +162,4 @@ This project generates synthetic media, and I am not responsible for what you cr
 
 ---
 
-If you made it till here, thanks, you're a real one :)
+If you made it till here, thanks :)
