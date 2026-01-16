@@ -14,7 +14,7 @@ from typing import Dict, Any, Optional
 import yaml
 
 from script_gen import generate_script
-from feedback_llm import generate_patch 
+from feedback_llm import generate_patch, call_llm
 from prompt_enhance import enhance
 from schemas import merge_video_spec_with_patch
 from image_gen import ImageGenerator
@@ -54,10 +54,11 @@ SUB_OUTLINE = 4
 SUB_SHADOW = 0
 
 # =============================================================================
-# PATHS
+# PATHS AND FLAGS
 # =============================================================================
 REGEN_ROOT_YAML = False
 SCRIPT_YAML_ONLY = False
+INTERACTIVE_MODE = False # For starting interactive chat with LLM to get ideas, doesn't run full pipeline
 
 ROOT = Path(".")
 BUILD = ROOT / "build"
@@ -182,7 +183,21 @@ def copy_latest_version_to_build(latest_version_path: Path) -> None:
     shutil.copy(latest_version_path, BUILD_VIDEO_YAML)
     print(f"[pipeline] build spec updated: {BUILD_VIDEO_YAML}")
 
-
+def start_interactive_chat():
+    """
+    Start an interactive chat session with the LLM for feedback.
+    """
+    print("Starting interactive chat session. Type 'exit' to quit.")
+    system_prompt = "You are a helpful assistant for generating video scripts and video ideas for short form video content, science explainer style. Do not use any formatting in your responses, just plain text."
+    print("Hi, what do you need help with today? I can give you ideas or anything else if you want.")
+    while True:
+        user_input = input("User: ")
+        if user_input.lower() == 'exit':
+            print("Exiting chat session.")
+            exit()
+        print("Thinking...")
+        response = call_llm(system_prompt, user_input)
+        print(f"LLM: {response}")
 # =============================================================================
 # Stage A: Generate patch from feedback (optional)
 # =============================================================================
@@ -451,6 +466,8 @@ def main():
     seed = now_seed(BASE_SEED, RANDOMIZE_SEED)
     ensure_dirs()
 
+    if INTERACTIVE_MODE: start_interactive_chat()
+ 
     # Generate Script yaml from prompt
     if REGEN_ROOT_YAML or (not ROOT_VIDEO_YAML.exists()) : print("[pipeline] regenerating script YAML...") ;generate_script(input_fpath=Path(SCRIPT_PROMPT), output_yaml_path=Path(SCRIPT_OUTPUT), seed=seed, temperature=0.7)
     if SCRIPT_YAML_ONLY:
