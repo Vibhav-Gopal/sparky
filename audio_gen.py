@@ -94,15 +94,20 @@ class CoquiVoiceover:
 
 if __name__ == "__main__":
     print("Testing TTS model...")
-    out_wav = CoquiVoiceover().generate(
-        spec={
-            "scenes": [
-                {"id": "s1", "text": "Hello, this is a test."},
-                {"id": "s2", "text": "This is the second scene."},
-            ]
-        },
-        out_wav_path="build/audio/test_narration.wav",
-        # speaker="Damien Black",
-        # language=None,
-    )
-    print("Done, saved to:", out_wav)
+    testmodel = CoquiVoiceover()
+    print(testmodel.tts.speakers)
+    for spk in testmodel.tts.speakers:
+        print("Speaker:", spk)
+
+        out_wav = testmodel.generate(
+            spec={
+                "scenes": [
+                    {"id": "s1", "text": "Hello, this is a test."},
+                    {"id": "s2", "text": "This is the second scene."},
+                ]
+            },
+            out_wav_path=f"build/audio/test_narration_{spk}.wav",
+            speaker=spk,
+            # language=None,
+        )
+    print("Done")
