@@ -185,7 +185,7 @@ def generate_ass_karaoke(
 ScriptType: v4.00+
 PlayResX: {video_w}
 PlayResY: {video_h}
-WrapStyle: 2
+WrapStyle: 0
 ScaledBorderAndShadow: yes
 
 [V4+ Styles]
@@ -224,6 +224,7 @@ def generate_subtitles_from_mfa_json(
         out_ass_path=out_ass_path,
         video_w=video_w,
         video_h=video_h,
+        align=1
     )
 
 
