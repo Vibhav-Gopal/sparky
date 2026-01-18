@@ -34,8 +34,8 @@ BASE_SEED = 1337
 RANDOMIZE_SEED = True  # if True -> BASE_SEED + unix time
 
 # Image generation
-SD_WIDTH = 144
-SD_HEIGHT = 256
+SD_WIDTH = 720
+SD_HEIGHT = 1280
 SD_STEPS = 9
 SD_GUIDANCE = 0.0
 
@@ -46,19 +46,20 @@ FPS = 30
 CROSSFADE_DUR = 0.45
 
 # Subtitle style forced in compositor
-OVERRIDE_SUBTITLE_STYLE = False
-FORCE_FONTNAME = "Montserrat"
-FORCE_FONTSIZE = 32
+OVERRIDE_SUBTITLE_STYLE = True
+FORCE_FONTNAME = "Copperplate"
+FORCE_FONTSIZE = 60
 SUB_FONTNAME = FORCE_FONTNAME
 SUB_FONTSIZE = FORCE_FONTSIZE
 SUB_MARGIN_V = 360
 SUB_OUTLINE = 4
 SUB_SHADOW = 0
 
+SPEAKER = "Viktor Menelaos"  # Coqui TTS speaker name
 # =============================================================================
 # PATHS AND FLAGS
 # =============================================================================
-CLEAN_BUILD = False  # If true, deletes build/ at start of run
+CLEAN_BUILD = True  # If true, deletes build/ at start of run
 REGEN_ROOT_YAML = False
 SCRIPT_YAML_ONLY = False
 INTERACTIVE_MODE = False # For starting interactive chat with LLM to get ideas, doesn't run full pipeline
@@ -336,7 +337,7 @@ def run_tts_per_scene(spec):
         text = scene["text"]
         out_wav = AUDIO_SCENES_DIR / f"{sid}.wav"
 
-        vo.generate_one(text=text, out_wav_path=out_wav)
+        vo.generate_one(text=text, out_wav_path=out_wav, speaker=SPEAKER)
         durations[sid] = wav_duration_seconds(str(out_wav))
 
     return durations
@@ -521,8 +522,7 @@ def main():
     
     print(f"[pipeline] seed = {seed} (BASE_SEED={BASE_SEED}, RANDOMIZE_SEED={RANDOMIZE_SEED})")
 
-    # 4) Generate images
-    run_images(spec, seed=seed)
+    
 
     # # 5) Generate audio
     durations = run_tts_per_scene(spec)
@@ -546,6 +546,9 @@ def main():
     # 7) Karaoke subtitles
     run_subtitles(mfa_json)
 
+    # 4) Generate images
+    run_images(spec, seed=seed)
+    # 7) Generate BGM (optional)
     if BGM_ENABLED: run_bgm(spec, bgm_output=BGM_OUTPUT, seed=seed, temperature=1.0)
 
     # 8) Compose final video
